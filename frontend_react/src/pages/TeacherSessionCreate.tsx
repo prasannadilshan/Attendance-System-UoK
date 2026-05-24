@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Container, Form, Button, Alert, Spinner, Row, Col, Modal } from 'react-bootstrap';
+import { Container, Form, Button, Spinner, Row, Col, Modal } from 'react-bootstrap';
 import { GoogleMap, useJsApiLoader, DrawingManager } from '@react-google-maps/api';
 import api from '../api/axios';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -221,7 +221,7 @@ const TeacherSessionCreate: React.FC = () => {
         setMap(map);
     }, []);
 
-    const onUnmount = useCallback(function callback(map: any) {
+    const onUnmount = useCallback(function callback() {
         setMap(null);
     }, []);
 

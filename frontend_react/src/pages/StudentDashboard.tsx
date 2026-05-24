@@ -442,7 +442,7 @@ const CourseCard = ({
                 Enroll Now
               </Button>
             ) : (
-              <Button variant="success" className="w-100" as={Link} to={`/student/course/${course.id}`}>
+              <Button variant="success" className="w-100" as={Link as any} to={`/student/course/${course.id}`}>
                 Go to Course
               </Button>
             )}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Button, Form, Alert, Card, Tabs, Tab, Table, Badge, Row, Col, Spinner, InputGroup, Pagination, Modal, ListGroup } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import * as XLSX from 'exceljs';
+
 import DashboardStats from './DashboardStats';
 
 const AdminDashboard: React.FC = () => {
@@ -105,6 +105,8 @@ interface Course {
     id: string;
     name: string;
     code: string;
+    enrollmentKey?: string;
+    teacherName?: string;
 }
 
 const TeacherDetailsModal = ({ show, onHide, teacher, refreshTeachers }: { show: boolean, onHide: () => void, teacher: Teacher | null, refreshTeachers: () => void }) => {
@@ -817,7 +819,7 @@ const SessionDetailsModal = ({ show, onHide, session, course, refreshSessions }:
         googleMapsApiKey: "AIzaSyA2eLFexIQfCqji9Tgrb73vKVJh0Fm_RXs",
         libraries: ['drawing', 'geometry']
     });
-    const [map, setMap] = React.useState(null);
+
     const [mapCenter, setMapCenter] = useState(defaultCenter);
     const rectRef = React.useRef<any>(null);
 
@@ -853,12 +855,10 @@ const SessionDetailsModal = ({ show, onHide, session, course, refreshSessions }:
         }
     }, [session, show]);
 
-    const onLoad = React.useCallback(function callback(map: any) {
-        setMap(map);
+    const onLoad = React.useCallback(function callback() {
     }, []);
 
-    const onUnmount = React.useCallback(function callback(map: any) {
-        setMap(null);
+    const onUnmount = React.useCallback(function callback() {
     }, []);
 
     const onRectangleComplete = (rect: any) => {

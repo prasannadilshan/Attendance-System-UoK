@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Tabs, Tab, Card, Button, Alert, Badge } from 'react-bootstrap';
+import { Container, Tabs, Tab, Card, Button, Alert } from 'react-bootstrap';
 import api from '../api/axios';
 
 const StudentSessions: React.FC = () => {
     const [sessions, setSessions] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [msg, setMsg] = useState<{type: string, text: string} | null>(null);
 
     useEffect(() => {
@@ -48,7 +48,7 @@ const StudentSessions: React.FC = () => {
             } finally {
                 setMarkingSessionId(null);
             }
-        }, (err) => {
+        }, () => {
             setMsg({type: 'danger', text: 'Unable to retrieve your location'});
             setMarkingSessionId(null);
         });

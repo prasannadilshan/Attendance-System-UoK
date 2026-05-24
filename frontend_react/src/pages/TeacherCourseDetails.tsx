@@ -3,7 +3,7 @@ import { Container, Button, Card, Row, Col, Spinner, Alert, Modal, Table, Tabs, 
 import { useParams, useNavigate } from 'react-router-dom';
 import { GoogleMap, useJsApiLoader, DrawingManager } from '@react-google-maps/api';
 import api from '../api/axios';
-import * as XLSX from 'exceljs';
+
 
 const containerStyle = {
   width: '100%',
@@ -96,7 +96,7 @@ const TeacherCourseDetails: React.FC = () => {
     const [manualMarkNote, setManualMarkNote] = useState('');
 
     // Map State
-    const [map, setMap] = React.useState(null);
+
     const [mapCenter, setMapCenter] = useState(defaultCenter);
     const rectRef = useRef<any>(null);
 
@@ -117,12 +117,10 @@ const TeacherCourseDetails: React.FC = () => {
         }
     }, []);
 
-    const onLoad = useCallback(function callback(map: any) {
-        setMap(map);
+    const onLoad = useCallback(function callback() {
     }, []);
 
-    const onUnmount = useCallback(function callback(map: any) {
-        setMap(null);
+    const onUnmount = useCallback(function callback() {
     }, []);
 
     const onRectangleComplete = (rect: any) => {

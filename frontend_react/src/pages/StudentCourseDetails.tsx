@@ -90,7 +90,7 @@ const StudentCourseDetails: React.FC = () => {
     const [attendanceMap, setAttendanceMap] = useState<Record<string, AttendanceStatus>>({});
 
     const fetchData = async () => {
-        setLoading(prev => sessions.length === 0);
+        setLoading(sessions.length === 0);
         try {
             // Fetch System Settings
             api.get('/api/system/general').then(res => {
