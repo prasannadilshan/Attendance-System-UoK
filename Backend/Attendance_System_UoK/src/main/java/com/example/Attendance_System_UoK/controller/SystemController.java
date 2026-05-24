@@ -9,7 +9,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/system")
-@CrossOrigin("*")
 public class SystemController {
 
     private final SystemSettingService service;

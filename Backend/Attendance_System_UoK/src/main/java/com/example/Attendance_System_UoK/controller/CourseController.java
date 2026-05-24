@@ -17,7 +17,6 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
-@CrossOrigin("*")
 @RestController
 @RequestMapping("/api/courses")
 public class CourseController {

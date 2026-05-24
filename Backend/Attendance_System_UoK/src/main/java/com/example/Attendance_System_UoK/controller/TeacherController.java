@@ -12,7 +12,7 @@ import org.springframework.data.web.PageableDefault;
 import java.util.List;
 import com.example.Attendance_System_UoK.model.Course;
 
-@CrossOrigin("*")
+
 @RestController
 @RequestMapping("/api/teachers")
 public class TeacherController {
