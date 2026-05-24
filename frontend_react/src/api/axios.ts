@@ -2,7 +2,8 @@ import axios from 'axios';
 
 const api = axios.create({
   //baseURL: 'https://api.attendancesystemuok.me', 
-  baseURL: 'http://localhost:8080'
+  //baseURL: 'http://localhost:8080'
+  baseURL: 'https://attendance-system-uok-1.onrender.com/'
 });
 
 api.interceptors.request.use(
