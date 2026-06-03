@@ -63,6 +63,7 @@ const StudentDashboard: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [enrollmentKey, setEnrollmentKey] = useState('');
   const [enrollError, setEnrollError] = useState('');
+  const [isEnrolling, setIsEnrolling] = useState(false);
   
   const [currentTerm, setCurrentTerm] = useState('');
   
@@ -82,6 +83,7 @@ const StudentDashboard: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passMsg, setPassMsg] = useState('');
   const [passError, setPassError] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   
 // Handler to change password: validates and posts to API
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -94,6 +96,7 @@ const StudentDashboard: React.FC = () => {
       return;
     }
 
+    setIsUpdatingPassword(true);
     try {
       await api.post('/api/users/change-password', {
         oldPassword,
@@ -109,6 +112,8 @@ const StudentDashboard: React.FC = () => {
     } catch (err: any) {
        console.error(err);
        setPassError(err.response?.data?.message || "Failed to change password");
+    } finally {
+       setIsUpdatingPassword(false);
     }
   };
 
@@ -126,6 +131,7 @@ const StudentDashboard: React.FC = () => {
   
 // Submit enrollment to API; accepts optional key
   const submitEnrollment = async (courseId: string, key: string | null) => {
+    setIsEnrolling(true);
     try {
       setError('');
       setSuccess('');
@@ -143,6 +149,8 @@ const StudentDashboard: React.FC = () => {
            setError(msg); // show global error
       }
       console.error(err);
+    } finally {
+      setIsEnrolling(false);
     }
   };
   
@@ -351,8 +359,12 @@ const StudentDashboard: React.FC = () => {
                 />
                 </Form.Group>
                 <div className="d-flex justify-content-end">
-                    <Button variant="secondary" className="me-2" onClick={() => setShowPasswordModal(false)}>Cancel</Button>
-                    <Button variant="warning" type="submit">Update Password</Button>
+                    <Button variant="secondary" className="me-2" onClick={() => setShowPasswordModal(false)} disabled={isUpdatingPassword}>Cancel</Button>
+                    <Button variant="warning" type="submit" disabled={isUpdatingPassword}>
+                        {isUpdatingPassword ? (
+                            <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> Updating...</>
+                        ) : 'Update Password'}
+                    </Button>
                 </div>
             </Form>
         </Modal.Body>
@@ -377,8 +389,12 @@ const StudentDashboard: React.FC = () => {
             </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowEnrollModal(false)}>Cancel</Button>
-            <Button variant="primary" onClick={() => selectedCourse && submitEnrollment(selectedCourse.id, enrollmentKey)}>Enroll</Button>
+            <Button variant="secondary" onClick={() => setShowEnrollModal(false)} disabled={isEnrolling}>Cancel</Button>
+            <Button variant="primary" onClick={() => selectedCourse && submitEnrollment(selectedCourse.id, enrollmentKey)} disabled={isEnrolling}>
+                {isEnrolling ? (
+                    <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> Enrolling...</>
+                ) : 'Enroll'}
+            </Button>
         </Modal.Footer>
       </Modal>
     </Container>

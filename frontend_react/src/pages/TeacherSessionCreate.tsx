@@ -96,6 +96,8 @@ const TeacherSessionCreate: React.FC = () => {
     const [showAddLocationModal, setShowAddLocationModal] = useState(false);
     const [saveLocationName, setSaveLocationName] = useState('');
     const [modalBoundary, setModalBoundary] = useState<{lat: number, lng: number}[]>([]);
+    const [isSavingLocation, setIsSavingLocation] = useState(false);
+    const [isDeletingLocation, setIsDeletingLocation] = useState(false);
 
     React.useEffect(() => {
         api.get('/api/locations').then(res => {
@@ -107,6 +109,7 @@ const TeacherSessionCreate: React.FC = () => {
         if (!selectedLocationId) return;
         if (!window.confirm("Are you sure you want to delete this location?")) return;
         
+        setIsDeletingLocation(true);
         try {
             await api.delete(`/api/locations/${selectedLocationId}`);
             setSavedLocations(savedLocations.filter(loc => loc.id !== selectedLocationId));
@@ -116,6 +119,8 @@ const TeacherSessionCreate: React.FC = () => {
         } catch (err: any) {
             console.error(err);
             setError("Failed to delete location.");
+        } finally {
+            setIsDeletingLocation(false);
         }
     };
     
@@ -207,6 +212,7 @@ const TeacherSessionCreate: React.FC = () => {
             setError("Please provide a name for the location.");
             return;
         }
+        setIsSavingLocation(true);
         try {
             const res = await api.post('/api/locations/create', {
                 name: saveLocationName,
@@ -221,6 +227,8 @@ const TeacherSessionCreate: React.FC = () => {
         } catch (err: any) {
             console.error(err);
             setError("Failed to save location.");
+        } finally {
+            setIsSavingLocation(false);
         }
     };
 
@@ -364,8 +372,12 @@ const TeacherSessionCreate: React.FC = () => {
                   </Form.Group>
               </Modal.Body>
               <Modal.Footer>
-                  <Button variant="secondary" onClick={handleCloseModal}>Cancel</Button>
-                  <Button variant="primary" onClick={handleSaveLocation}>Save Location</Button>
+                  <Button variant="secondary" onClick={handleCloseModal} disabled={isSavingLocation}>Cancel</Button>
+                  <Button variant="primary" onClick={handleSaveLocation} disabled={isSavingLocation}>
+                      {isSavingLocation ? (
+                          <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> Saving...</>
+                      ) : 'Save Location'}
+                  </Button>
               </Modal.Footer>
           </Modal>
           
@@ -480,7 +492,11 @@ const TeacherSessionCreate: React.FC = () => {
                       <Col md={5} className="d-flex gap-2">
                           <Button variant="primary" onClick={() => setShowAddLocationModal(true)}>+ Add Location</Button>
                           {selectedLocationId && (
-                              <Button variant="danger" onClick={handleDeleteLocation}>Delete</Button>
+                              <Button variant="danger" onClick={handleDeleteLocation} disabled={isDeletingLocation}>
+                                  {isDeletingLocation ? (
+                                      <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> Deleting...</>
+                                  ) : 'Delete'}
+                              </Button>
                           )}
                       </Col>
                   </Row>

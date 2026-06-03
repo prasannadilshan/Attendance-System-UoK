@@ -72,6 +72,7 @@ const StudentCourseDetails: React.FC = () => {
     const [error, setError] = useState('');
     const [msg, setMsg] = useState('');
     const [showUnenrollModal, setShowUnenrollModal] = useState(false);
+    const [isUnenrolling, setIsUnenrolling] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     
     // System Settings
@@ -145,6 +146,7 @@ const StudentCourseDetails: React.FC = () => {
     }, [courseId]);
 
     const handleUnenroll = async () => {
+        setIsUnenrolling(true);
         try {
             await api.delete(`/api/courses/${courseId}/unenroll/${user?.id}`);
             setShowUnenrollModal(false);
@@ -153,6 +155,8 @@ const StudentCourseDetails: React.FC = () => {
             console.error(err);
             setError("Failed to unenroll.");
             setShowUnenrollModal(false);
+        } finally {
+            setIsUnenrolling(false);
         }
     };
 
@@ -538,11 +542,13 @@ const StudentCourseDetails: React.FC = () => {
                     <span className="text-danger small">You will lose access to all session history for this course.</span>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowUnenrollModal(false)}>
+                    <Button variant="secondary" onClick={() => setShowUnenrollModal(false)} disabled={isUnenrolling}>
                         Cancel
                     </Button>
-                    <Button variant="danger" onClick={handleUnenroll}>
-                        Yes, Unenroll
+                    <Button variant="danger" onClick={handleUnenroll} disabled={isUnenrolling}>
+                        {isUnenrolling ? (
+                            <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> Unenrolling...</>
+                        ) : 'Yes, Unenroll'}
                     </Button>
                 </Modal.Footer>
             </Modal>

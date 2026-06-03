@@ -83,7 +83,12 @@ const StudentSessions: React.FC = () => {
                         onClick={() => markAttendance(session.id)}
                         disabled={markingSessionId === session.id}
                     >
-                        {markingSessionId === session.id ? 'Marking...' : 'Mark Attendance'}
+                        {markingSessionId === session.id ? (
+                            <>
+                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                                Marking...
+                            </>
+                        ) : 'Mark Attendance'}
                     </Button>
                 )}
             </Card.Body>
