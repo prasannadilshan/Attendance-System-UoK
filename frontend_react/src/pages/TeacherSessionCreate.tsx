@@ -113,9 +113,6 @@ const TeacherSessionCreate: React.FC = () => {
             setSelectedLocationId('');
             setBoundary([]);
             setSuccess("Location deleted successfully!");
-            if (rectRef.current) {
-                rectRef.current.setMap(null);
-            }
         } catch (err: any) {
             console.error(err);
             setError("Failed to delete location.");
@@ -150,6 +147,17 @@ const TeacherSessionCreate: React.FC = () => {
 
     const [map, setMap] = React.useState<any>(null);
     const rectRef = useRef<any>(null);
+    const modalRectRef = useRef<any>(null);
+
+    const handleCloseModal = () => {
+        setShowAddLocationModal(false);
+        if (modalRectRef.current) {
+            modalRectRef.current.setMap(null);
+            modalRectRef.current = null;
+        }
+        setModalBoundary([]);
+        setSaveLocationName('');
+    };
 
     const handleSelectLocation = (id: string, locations = savedLocations) => {
         setSelectedLocationId(id);
@@ -159,13 +167,19 @@ const TeacherSessionCreate: React.FC = () => {
             if (loc.boundary && loc.boundary.length > 0) {
                 setMapCenter({ lat: loc.boundary[0].lat, lng: loc.boundary[0].lng });
             }
-            
-            if (map && window.google) {
-                if (rectRef.current) {
-                    rectRef.current.setMap(null);
-                }
+        } else {
+            setBoundary([]);
+        }
+    };
+
+    React.useEffect(() => {
+        if (map && window.google) {
+            if (rectRef.current) {
+                rectRef.current.setMap(null);
+            }
+            if (boundary && boundary.length > 0) {
                 const polygon = new window.google.maps.Polygon({
-                    paths: loc.boundary,
+                    paths: boundary,
                     editable: false,
                     draggable: false,
                     fillColor: '#0d6efd',
@@ -178,16 +192,11 @@ const TeacherSessionCreate: React.FC = () => {
                 rectRef.current = polygon;
                 
                 const bounds = new window.google.maps.LatLngBounds();
-                loc.boundary.forEach((p: any) => bounds.extend(new window.google.maps.LatLng(p.lat, p.lng)));
+                boundary.forEach((p: any) => bounds.extend(new window.google.maps.LatLng(p.lat, p.lng)));
                 map.fitBounds(bounds);
             }
-        } else {
-            setBoundary([]);
-            if (rectRef.current) {
-                rectRef.current.setMap(null);
-            }
         }
-    };
+    }, [map, boundary]);
 
     const handleSaveLocation = async () => {
         if (modalBoundary.length !== 4) {
@@ -206,10 +215,8 @@ const TeacherSessionCreate: React.FC = () => {
             const newLocations = [...savedLocations, res.data];
             setSavedLocations(newLocations);
             setSuccess("Location saved successfully!");
-            setSaveLocationName('');
-            setModalBoundary([]);
-            setShowAddLocationModal(false);
             
+            handleCloseModal();
             handleSelectLocation(res.data.id, newLocations);
         } catch (err: any) {
             console.error(err);
@@ -226,6 +233,11 @@ const TeacherSessionCreate: React.FC = () => {
     }, []);
 
     const onModalRectangleComplete = (rect: any) => {
+        if (modalRectRef.current) {
+            modalRectRef.current.setMap(null);
+        }
+        modalRectRef.current = rect;
+
         const bounds = rect.getBounds();
         const ne = bounds.getNorthEast();
         const sw = bounds.getSouthWest();
@@ -310,7 +322,7 @@ const TeacherSessionCreate: React.FC = () => {
               </Modal.Footer>
           </Modal>
 
-          <Modal show={showAddLocationModal} onHide={() => setShowAddLocationModal(false)} size="lg" centered>
+          <Modal show={showAddLocationModal} onHide={handleCloseModal} size="lg" centered>
               <Modal.Header closeButton>
                   <Modal.Title>Add New Location</Modal.Title>
               </Modal.Header>
@@ -352,7 +364,7 @@ const TeacherSessionCreate: React.FC = () => {
                   </Form.Group>
               </Modal.Body>
               <Modal.Footer>
-                  <Button variant="secondary" onClick={() => setShowAddLocationModal(false)}>Cancel</Button>
+                  <Button variant="secondary" onClick={handleCloseModal}>Cancel</Button>
                   <Button variant="primary" onClick={handleSaveLocation}>Save Location</Button>
               </Modal.Footer>
           </Modal>
@@ -472,17 +484,19 @@ const TeacherSessionCreate: React.FC = () => {
                           )}
                       </Col>
                   </Row>
-                  <div className="border rounded p-1 mb-2">
-                      <GoogleMap
-                        mapContainerStyle={containerStyle}
-                        center={mapCenter}
-                        zoom={15}
-                        onLoad={onLoad}
-                        onUnmount={onUnmount}
-                      >
-                         {/* Location preview shown here via Polygon drawn dynamically */}
-                      </GoogleMap>
-                  </div>
+                  {selectedLocationId && (
+                      <div className="border rounded p-1 mb-2">
+                          <GoogleMap
+                            mapContainerStyle={containerStyle}
+                            center={mapCenter}
+                            zoom={15}
+                            onLoad={onLoad}
+                            onUnmount={onUnmount}
+                          >
+                             {/* Location preview shown here via Polygon drawn dynamically */}
+                          </GoogleMap>
+                      </div>
+                  )}
                   {!selectedLocationId && (
                       <Form.Text className="text-danger">Please select a location for the session.</Form.Text>
                   )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Tabs, Tab, Card, Button, Alert } from 'react-bootstrap';
+import { Container, Tabs, Tab, Card, Button, Alert, Modal, Spinner } from 'react-bootstrap';
 import api from '../api/axios';
 
 const StudentSessions: React.FC = () => {
@@ -23,33 +23,45 @@ const StudentSessions: React.FC = () => {
     };
 
     const [markingSessionId, setMarkingSessionId] = useState<string | null>(null);
+    const [showModal, setShowModal] = useState(false);
+    const [markingStep, setMarkingStep] = useState<'GETTING_LOCATION' | 'MARKING' | 'SUCCESS' | 'ERROR' | null>(null);
+    const [modalMsg, setModalMsg] = useState('');
 
     const markAttendance = async (sessionId: string) => {
         setMsg(null);
         setMarkingSessionId(sessionId);
+        setShowModal(true);
+        setMarkingStep('GETTING_LOCATION');
+        setModalMsg('Getting your location...');
+
         if (!navigator.geolocation) {
-            setMsg({type: 'danger', text: 'Geolocation is not supported by your browser'});
+            setMarkingStep('ERROR');
+            setModalMsg('Geolocation is not supported by your browser');
             setMarkingSessionId(null);
             return;
         }
 
         navigator.geolocation.getCurrentPosition(async (position) => {
             const { latitude, longitude } = position.coords;
+            setMarkingStep('MARKING');
+            setModalMsg('Submitting your attendance...');
             try {
                 await api.post('/api/sessions/mark', {
                     sessionId,
                     lat: latitude,
                     lng: longitude
                 });
-                setMsg({type: 'success', text: 'Attendance Marked Successfully!'});
-                // Disable button or refresh
+                setMarkingStep('SUCCESS');
+                setModalMsg('Attendance Marked Successfully!');
             } catch (err: any) {
-                setMsg({type: 'danger', text: err.response?.data?.message || 'Failed to mark attendance'});
+                setMarkingStep('ERROR');
+                setModalMsg(err.response?.data?.message || 'Failed to mark attendance');
             } finally {
                 setMarkingSessionId(null);
             }
         }, () => {
-            setMsg({type: 'danger', text: 'Unable to retrieve your location'});
+            setMarkingStep('ERROR');
+            setModalMsg('Unable to retrieve your location. Please ensure location services are enabled.');
             setMarkingSessionId(null);
         });
     };
@@ -58,8 +70,8 @@ const StudentSessions: React.FC = () => {
     const scheduledSessions = sessions.filter(s => s.status === 'SCHEDULED');
     const expiredSessions = sessions.filter(s => s.status === 'EXPIRED');
 
-    const SessionCard = ({ session, showMark }: { session: any, showMark: boolean }) => (
-        <Card className="mb-3">
+    const renderSessionCard = (session: any, showMark: boolean) => (
+        <Card className="mb-3" key={session.id}>
             <Card.Body>
                 <Card.Title>{session.title}</Card.Title>
                 <Card.Subtitle className="mb-2 text-muted">
@@ -82,17 +94,60 @@ const StudentSessions: React.FC = () => {
         <Container className="mt-4">
             <h2>My Sessions</h2>
             {msg && <Alert variant={msg.type}>{msg.text}</Alert>}
+
+            <Modal show={showModal} onHide={() => {
+                if (markingStep === 'SUCCESS' || markingStep === 'ERROR') {
+                    setShowModal(false);
+                    setTimeout(() => setMarkingStep(null), 300); // clear after animation
+                }
+            }} centered backdrop="static" keyboard={false}>
+                <Modal.Header closeButton={markingStep === 'SUCCESS' || markingStep === 'ERROR'}>
+                    <Modal.Title>Marking Attendance</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="text-center py-4">
+                    {(markingStep === 'GETTING_LOCATION' || markingStep === 'MARKING') && (
+                        <div className="mb-3">
+                            <Spinner animation="border" variant="primary" />
+                        </div>
+                    )}
+                    {markingStep === 'SUCCESS' && (
+                        <div className="mb-3 text-success">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" className="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                            </svg>
+                        </div>
+                    )}
+                    {markingStep === 'ERROR' && (
+                        <div className="mb-3 text-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" className="bi bi-x-circle-fill" viewBox="0 0 16 16">
+                              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                            </svg>
+                        </div>
+                    )}
+                    <h5>{modalMsg}</h5>
+                </Modal.Body>
+                {(markingStep === 'SUCCESS' || markingStep === 'ERROR') && (
+                    <Modal.Footer>
+                        <Button variant="primary" onClick={() => {
+                            setShowModal(false);
+                            setTimeout(() => setMarkingStep(null), 300);
+                        }}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                )}
+            </Modal>
             
             <Tabs defaultActiveKey="active" className="mb-3">
                 <Tab eventKey="active" title={`Active (${activeSessions.length})`}>
                      {activeSessions.length === 0 && <p>No active sessions.</p>}
-                     {activeSessions.map(s => <SessionCard key={s.id} session={s} showMark={true} />)}
+                     {activeSessions.map(s => renderSessionCard(s, true))}
                 </Tab>
                 <Tab eventKey="scheduled" title={`Scheduled (${scheduledSessions.length})`}>
-                     {scheduledSessions.map(s => <SessionCard key={s.id} session={s} showMark={false} />)}
+                     {scheduledSessions.map(s => renderSessionCard(s, false))}
                 </Tab>
                 <Tab eventKey="expired" title="Expired/History">
-                     {expiredSessions.map(s => <SessionCard key={s.id} session={s} showMark={false} />)}
+                     {expiredSessions.map(s => renderSessionCard(s, false))}
                 </Tab>
             </Tabs>
         </Container>

@@ -65,6 +65,9 @@ const StudentCourseDetails: React.FC = () => {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [markedSessionIds, setMarkedSessionIds] = useState<string[]>([]);
     const [markingSessionId, setMarkingSessionId] = useState<string | null>(null);
+    const [showModal, setShowModal] = useState(false);
+    const [markingStep, setMarkingStep] = useState<'GETTING_LOCATION' | 'MARKING' | 'SUCCESS' | 'ERROR' | null>(null);
+    const [modalMsg, setModalMsg] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [msg, setMsg] = useState('');
@@ -162,15 +165,21 @@ const StudentCourseDetails: React.FC = () => {
         setMsg('');
         setError('');
         setMarkingSessionId(sessionId);
+        setShowModal(true);
+        setMarkingStep('GETTING_LOCATION');
+        setModalMsg('Getting your location...');
         
         if (!navigator.geolocation) {
-            setError("Geolocation is not supported by your browser.");
+            setMarkingStep('ERROR');
+            setModalMsg("Geolocation is not supported by your browser.");
             setMarkingSessionId(null);
             return;
         }
 
         navigator.geolocation.getCurrentPosition(
             async (position) => {
+                setMarkingStep('MARKING');
+                setModalMsg('Submitting your attendance...');
                 try {
                     const { latitude, longitude } = position.coords;
                     const deviceToken = localStorage.getItem('device_token');
@@ -181,18 +190,21 @@ const StudentCourseDetails: React.FC = () => {
                         lng: longitude,
                         deviceToken: deviceToken || ""
                     });
-                    setMsg("Attendance Marked Successfully!");
+                    setMarkingStep('SUCCESS');
+                    setModalMsg("Attendance Marked Successfully!");
                     fetchData(); // Refresh marked status
                 } catch (err: any) {
                     console.error(err);
-                    setError(err.response?.data?.message || "Failed to mark attendance.");
+                    setMarkingStep('ERROR');
+                    setModalMsg(err.response?.data?.message || "Failed to mark attendance.");
                 } finally {
                     setMarkingSessionId(null);
                 }
             },
             (err) => {
                 console.error(err);
-                setError("Unable to retrieve location. Please allow location access.");
+                setMarkingStep('ERROR');
+                setModalMsg("Unable to retrieve location. Please allow location access.");
                 setMarkingSessionId(null);
             }
         );
@@ -470,6 +482,50 @@ const StudentCourseDetails: React.FC = () => {
                     </Row>
                 </Tab>
             </Tabs>
+
+            {/* Marking Attendance Modal */}
+            <Modal show={showModal} onHide={() => {
+                if (markingStep === 'SUCCESS' || markingStep === 'ERROR') {
+                    setShowModal(false);
+                    setTimeout(() => setMarkingStep(null), 300);
+                }
+            }} centered backdrop="static" keyboard={false}>
+                <Modal.Header closeButton={markingStep === 'SUCCESS' || markingStep === 'ERROR'}>
+                    <Modal.Title>Marking Attendance</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="text-center py-4">
+                    {(markingStep === 'GETTING_LOCATION' || markingStep === 'MARKING') && (
+                        <div className="mb-3">
+                            <Spinner animation="border" variant="primary" />
+                        </div>
+                    )}
+                    {markingStep === 'SUCCESS' && (
+                        <div className="mb-3 text-success">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" className="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                            </svg>
+                        </div>
+                    )}
+                    {markingStep === 'ERROR' && (
+                        <div className="mb-3 text-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" className="bi bi-x-circle-fill" viewBox="0 0 16 16">
+                              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                            </svg>
+                        </div>
+                    )}
+                    <h5>{modalMsg}</h5>
+                </Modal.Body>
+                {(markingStep === 'SUCCESS' || markingStep === 'ERROR') && (
+                    <Modal.Footer>
+                        <Button variant="primary" onClick={() => {
+                            setShowModal(false);
+                            setTimeout(() => setMarkingStep(null), 300);
+                        }}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                )}
+            </Modal>
 
             {/* Unenroll Confirmation Modal */}
             <Modal show={showUnenrollModal} onHide={() => setShowUnenrollModal(false)} centered>
