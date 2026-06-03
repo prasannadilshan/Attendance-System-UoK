@@ -18,14 +18,17 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final StudentRepository studentRepository;
     private final com.example.Attendance_System_UoK.repository.SessionRepository sessionRepository;
     private final com.example.Attendance_System_UoK.repository.CourseRepository courseRepository;
+    private final com.example.Attendance_System_UoK.service.SystemSettingService systemSettingService;
 
     public AttendanceServiceImpl(AttendanceRepository attendanceRepository, StudentRepository studentRepository,
             com.example.Attendance_System_UoK.repository.SessionRepository sessionRepository,
-            com.example.Attendance_System_UoK.repository.CourseRepository courseRepository) {
+            com.example.Attendance_System_UoK.repository.CourseRepository courseRepository,
+            com.example.Attendance_System_UoK.service.SystemSettingService systemSettingService) {
         this.attendanceRepository = attendanceRepository;
         this.studentRepository = studentRepository;
         this.sessionRepository = sessionRepository;
         this.courseRepository = courseRepository;
+        this.systemSettingService = systemSettingService;
     }
 
     @Override
@@ -100,14 +103,15 @@ public class AttendanceServiceImpl implements AttendanceService {
         attendance.setManuallyMarked(true);
         attendance.setManualMarkNote(note);
         attendance.setStatus("PRESENT");
-        attendance.setMarkedAt(java.time.LocalDateTime.now());
+        
+        java.time.LocalDateTime now = java.time.LocalDateTime.now(systemSettingService.getSystemTimezone());
+        attendance.setMarkedAt(now);
 
         if (attendance.getCheckInTimes() == null) {
             attendance.setCheckInTimes(new java.util.ArrayList<>());
         }
-        // Add a timestamp for the manual mark if desired, or relying on
-        // isManuallyMarked flag
-        attendance.getCheckInTimes().add(java.time.LocalDateTime.now());
+        
+        attendance.getCheckInTimes().add(now);
 
         attendanceRepository.save(attendance);
     }

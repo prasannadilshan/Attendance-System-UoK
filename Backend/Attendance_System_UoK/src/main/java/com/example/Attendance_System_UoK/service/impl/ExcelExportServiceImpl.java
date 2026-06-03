@@ -3,7 +3,7 @@ package com.example.Attendance_System_UoK.service.impl;
 import com.example.Attendance_System_UoK.dto.CourseAttendanceReportDTO;
 import com.example.Attendance_System_UoK.dto.StudentBasicInfo;
 import com.example.Attendance_System_UoK.model.Session;
-import com.example.Attendance_System_UoK.service.ExcelExportService;
+import com.example.Attendance_System_UoK.service.SystemSettingService;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -15,6 +15,12 @@ import java.util.List;
 
 @Service
 public class ExcelExportServiceImpl implements ExcelExportService {
+    
+    private final SystemSettingService systemSettingService;
+
+    public ExcelExportServiceImpl(SystemSettingService systemSettingService) {
+        this.systemSettingService = systemSettingService;
+    }
 
     @Override
     public ByteArrayInputStream exportAttendanceToExcel(String sessionTitle, List<StudentBasicInfo> students) {
@@ -22,7 +28,8 @@ public class ExcelExportServiceImpl implements ExcelExportService {
             Sheet sheet = workbook.createSheet("Attendance");
 
             Row headerRow = sheet.createRow(0);
-            String[] columns = { "Full Name", "Student ID", "Status", "Check-in Time", "Notes" };
+            String tz = systemSettingService.getCurrentTimezoneId();
+            String[] columns = { "Full Name", "Student ID", "Status", "Check-in Time (" + tz + ")", "Notes" };
 
             CellStyle headerStyle = workbook.createCellStyle();
             Font font = workbook.createFont();
@@ -151,12 +158,13 @@ public class ExcelExportServiceImpl implements ExcelExportService {
             int colIdx = 3;
             // Sort sessions by date
             sessions.sort((a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+            String tz = systemSettingService.getCurrentTimezoneId();
 
             for (Session session : sessions) {
                 Cell cell = headerRow.createCell(colIdx++);
                 // Format: Title (Date)
                 String dateStr = session.getStartTime().toLocalDate().toString();
-                cell.setCellValue(session.getTitle() + " (" + dateStr + ")");
+                cell.setCellValue(session.getTitle() + " (" + dateStr + " " + tz + ")");
                 cell.setCellStyle(headerStyle);
             }
 
